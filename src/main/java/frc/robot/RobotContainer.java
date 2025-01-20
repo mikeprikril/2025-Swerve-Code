@@ -4,15 +4,17 @@
 
 package frc.robot;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.ControllerConstants;
-import frc.robot.commands.swervedrive.drivebase.AbsoluteDriveAdv;
+import frc.robot.commands.ManualElevatorCommand;
+import frc.robot.subsystems.ElevatorSubsystem;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 import java.io.File;
 import swervelib.SwerveInputStream;
@@ -24,12 +26,18 @@ import swervelib.SwerveInputStream;
  */
 public class RobotContainer
 {
+  // Controllers
+  final XboxController driverXbox = new XboxController(ControllerConstants.DriverUSBPort);
+  final XboxController operatorXbox = new XboxController(ControllerConstants.OperatorUSBPort);
 
-  // Replace with CommandPS4Controller or CommandJoystick if needed
-  final CommandXboxController driverXbox = new CommandXboxController(ControllerConstants.DriverUSBPort);
-  final CommandXboxController operatorXbox = new CommandXboxController(ControllerConstants.OperatorUSBPort);
+  // Subsystems
+  private final ElevatorSubsystem elevator = new ElevatorSubsystem();
 
-  // The robot's subsystems and commands are defined here...
+  // Commands
+  private final ManualElevatorCommand manualElevator;
+
+
+  //All the YAGSL Swerve Stuff - 
   private final SwerveSubsystem drivebase  = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(),
                                                                                 "swerve/neo"));
   // Applies deadbands and inverts controls because joysticks are back-right positive while robot controls are front-left positive
@@ -37,17 +45,7 @@ public class RobotContainer
   // right stick controls the rotational velocity 
   // buttons are quick rotation positions to different ways to face
   // WARNING: default buttons are on the same buttons as the ones defined in configureBindings
-  AbsoluteDriveAdv closedAbsoluteDriveAdv = new AbsoluteDriveAdv(drivebase,
-                                                                 () -> -MathUtil.applyDeadband(driverXbox.getLeftY(),
-                                                                                               ControllerConstants.LEFT_Y_DEADBAND),
-                                                                 () -> -MathUtil.applyDeadband(driverXbox.getLeftX(),
-                                                                 ControllerConstants.DEADBAND),
-                                                                 () -> -MathUtil.applyDeadband(driverXbox.getRightX(),
-                                                                 ControllerConstants.RIGHT_X_DEADBAND),
-                                                                 driverXbox.getHID()::getYButtonPressed,
-                                                                 driverXbox.getHID()::getAButtonPressed,
-                                                                 driverXbox.getHID()::getXButtonPressed,
-                                                                 driverXbox.getHID()::getBButtonPressed);
+
 
   /**
    * Converts driver input into a field-relative ChassisSpeeds that is controlled by angular velocity.
@@ -78,35 +76,15 @@ public class RobotContainer
   // right stick controls the angular velocity of the robot
   Command driveFieldOrientedAnglularVelocity = drivebase.driveFieldOriented(driveAngularVelocity);
 
-  Command driveSetpointGen = drivebase.driveWithSetpointGeneratorFieldRelative(driveDirectAngle);
 
-  SwerveInputStream driveAngularVelocitySim = SwerveInputStream.of(drivebase.getSwerveDrive(),
-                                                                   () -> -driverXbox.getLeftY(),
-                                                                   () -> -driverXbox.getLeftX())
-                                                               .withControllerRotationAxis(() -> driverXbox.getRawAxis(2))
-                                                               .deadband(ControllerConstants.DEADBAND)
-                                                               .scaleTranslation(0.8)
-                                                               .allianceRelativeControl(true);
-  // Derive the heading axis with math!
-  SwerveInputStream driveDirectAngleSim     = driveAngularVelocitySim.copy()
-                                                                     .withControllerHeadingAxis(() -> Math.sin(
-                                                                                                    driverXbox.getRawAxis(
-                                                                                                        2) * Math.PI) * (Math.PI * 2),
-                                                                                                () -> Math.cos(
-                                                                                                    driverXbox.getRawAxis(
-                                                                                                        2) * Math.PI) *
-                                                                                                      (Math.PI * 2))
-                                                                     .headingWhile(true);
-
-  Command driveFieldOrientedDirectAngleSim = drivebase.driveFieldOriented(driveDirectAngleSim);
-
-  Command driveSetpointGenSim = drivebase.driveWithSetpointGeneratorFieldRelative(driveDirectAngleSim);
-
-  /**
-   * The container for the robot. Contains subsystems, OI devices, and commands.
-   */
   public RobotContainer()
   {
+    //initialize all teleop and auto commands here
+    manualElevator = new ManualElevatorCommand(elevator, operatorXbox);
+
+    //Pathplanner named commands go here
+    //NamedCommands.registerCommand("Fire From Subwoofer", new FireFromSubwoofer(m_arm, m_shooter));
+
     // Configure the trigger bindings
     configureBindings();
     DriverStation.silenceJoystickConnectionWarning(true);
@@ -122,11 +100,14 @@ public class RobotContainer
    */
   private void configureBindings()
   {
-    // (Condition) ? Return-On-True : Return-on-False
+    // Default Commands
     drivebase.setDefaultCommand(driveFieldOrientedAnglularVelocity);
+    elevator.setDefaultCommand(manualElevator);
 
-    driverXbox.start().onTrue((Commands.runOnce(drivebase::zeroGyro)));
-    driverXbox.back().whileTrue(drivebase.centerModulesCommand());
+    //Joystick Button Actions
+    new JoystickButton(driverXbox, 8).onTrue(new InstantCommand(drivebase::zeroGyro));
+    new JoystickButton(driverXbox, 9).whileTrue(drivebase.centerModulesCommand());
+    
   }
 
   /**

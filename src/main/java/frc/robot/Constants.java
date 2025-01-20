@@ -45,4 +45,35 @@ public final class Constants
     public static final double TURN_CONSTANT = 6;
 
   }
+
+  public static class IntakeConstants
+  {
+    public static final int LeftIntakeCANID = 15;
+    public static final int RightIntakeCANID = 16;
+    public static final int RotateCANID = 17;
+
+    public static final int IntakeBottomLimitSwitchIO = 3;
+    public static final int IntakeTopLimitSwitchIO = 4;
+    
+    public static final double MotorSpeed = .5;
+    public static final double Offset = .8; //How much do we slow down one wheel to coral rotates
+    public static final double SpitOutSpeed = -.8;
+    public static final double AutoRotateSpeed = 0.5;
+
+    public static final double DownSpeed = -.3;
+    public static final double UpSpeed = .5;
+      
+  }
+
+  public static class ElevatorConstants{
+    public static final int leftMotorCANID = 10;
+    public static final int rightMotorCANID = 11;
+
+    public static final int elevatorBottomLimitSwitchIO = 1;
+    public static final int elevatorTopLimitSwitchIO = 2;
+
+    public static final int AlmostDownValue = 100; //slow down when close to bottom
+    public static final int AlmostUpValue = 900; //slow down when close to top
+    public static final double SlowDown = 0.3; //slow down by 30% if close to limit
+  }
 }
