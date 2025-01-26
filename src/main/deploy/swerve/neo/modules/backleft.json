@@ -17,7 +17,7 @@
   "encoder": {
     "type": "none",
     "id": 12,
-    "canbus": null
+    "canbus": "rio"
   },
   "inverted": {
     "drive": false,

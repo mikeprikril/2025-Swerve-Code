@@ -9,6 +9,8 @@ import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkBase.ControlType;
+import com.revrobotics.spark.SparkBase.PersistMode;
+import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
@@ -24,8 +26,8 @@ public class ElevatorSubsystem extends SubsystemBase {
   SparkMax leftElevatorMotor;
   SparkMax rightElevatorMotor;
 
-  SparkMaxConfig leftMotorConfig = new SparkMaxConfig();
-  SparkMaxConfig rightMotorConfig = new SparkMaxConfig();
+  //SparkMaxConfig leftMotorConfig = new SparkMaxConfig();
+  //SparkMaxConfig rightMotorConfig = new SparkMaxConfig();
   double elevatorEncoder;
 
   DigitalInput elevatorBottomLimitSwitch;
@@ -37,7 +39,7 @@ public class ElevatorSubsystem extends SubsystemBase {
   
   public ElevatorSubsystem() {
     
-    leftMotorConfig.inverted(false) //dont invert left motor
+    /*leftMotorConfig.inverted(false) //dont invert left motor
     .idleMode(IdleMode.kBrake); //keep brake on
     leftMotorConfig.closedLoop.feedbackSensor(FeedbackSensor.kAbsoluteEncoder) //define encoder for control (might have to change)
     .pid(.0001, 0, 0) //PID constants
@@ -46,13 +48,14 @@ public class ElevatorSubsystem extends SubsystemBase {
     rightMotorConfig.inverted(true) //invert right motor so it spins opposite way
     .idleMode(IdleMode.kBrake) //keep brake on
     .follow(leftElevatorMotor); //follow the left motor
+    */
     
     leftElevatorMotor = new SparkMax(Constants.ElevatorConstants.leftMotorCANID, MotorType.kBrushless);
-    leftElevatorMotor.configure(leftMotorConfig, null, null);
+    //leftElevatorMotor.configure(leftMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
     elevatorEncoder = leftElevatorMotor.getAbsoluteEncoder().getPosition();
 
     rightElevatorMotor = new SparkMax(Constants.ElevatorConstants.rightMotorCANID, MotorType.kBrushless);
-    rightElevatorMotor.configure(rightMotorConfig, null, null);
+    //rightElevatorMotor.configure(rightMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters);
 
     pidController = leftElevatorMotor.getClosedLoopController();
 
@@ -61,23 +64,29 @@ public class ElevatorSubsystem extends SubsystemBase {
   public void ElevatorJoystickControl(double elevatorCommandSpeed){
     if(elevatorCommandSpeed > 0 && elevatorBottomLimitSwitch.get() == false){ //dont move down if pushing lower limit switch
       leftElevatorMotor.stopMotor();
+      rightElevatorMotor.stopMotor();
     }
     else if(elevatorCommandSpeed > 0 && elevatorEncoder < Constants.ElevatorConstants.AlmostDownValue){//go downn slow if close to low limit
       leftElevatorMotor.set(Constants.ElevatorConstants.SlowDown*elevatorCommandSpeed);
+      rightElevatorMotor.set(Constants.ElevatorConstants.SlowDown*-elevatorCommandSpeed);
     }
     else if(elevatorCommandSpeed < 0 && elevatorTopLimitSwitch.get() == false){//dont move up if pushing upper limit switch
       leftElevatorMotor.stopMotor();
+      rightElevatorMotor.stopMotor();
     }
     else if(elevatorCommandSpeed < 0 && elevatorEncoder > Constants.ElevatorConstants.AlmostUpValue){//go up slow if close to high limit
       leftElevatorMotor.set(Constants.ElevatorConstants.SlowDown*elevatorCommandSpeed);
+      rightElevatorMotor.set(Constants.ElevatorConstants.SlowDown*-elevatorCommandSpeed);
     }
     else{
       leftElevatorMotor.set(elevatorCommandSpeed);
+      rightElevatorMotor.set(-elevatorCommandSpeed);
     }
   }
 
   public void AutoElevator (double requestSpeed){
     leftElevatorMotor.set(requestSpeed);
+    rightElevatorMotor.set(-requestSpeed);
   }
 
   public void PIDElevator(double ElevatorSetpoint){
@@ -87,6 +96,7 @@ public class ElevatorSubsystem extends SubsystemBase {
 
   public void StopElevator(){
     leftElevatorMotor.stopMotor();
+    rightElevatorMotor.stopMotor();
   }
 
   public double GetElevatorEncoderPosition(){
@@ -106,6 +116,8 @@ public class ElevatorSubsystem extends SubsystemBase {
   public boolean GetBottomLimitSwitch(){
     return elevatorBottomLimitSwitch.get();
    }
+
+
   
 
   @Override
@@ -118,7 +130,8 @@ public class ElevatorSubsystem extends SubsystemBase {
     SmartDashboard.putNumber("Right Elevator Current ", rightElevatorMotor.getOutputCurrent());
 
     SmartDashboard.putNumber("Alt Encoder Velocity", leftElevatorMotor.getAbsoluteEncoder().getVelocity());
-    SmartDashboard.putNumber("Applied Output", leftElevatorMotor.getAppliedOutput());
+    SmartDashboard.putNumber("Left Elevator Applied Output", leftElevatorMotor.getAppliedOutput());
+    SmartDashboard.putNumber("Right Elevator Applied Output", rightElevatorMotor.getAppliedOutput());
 
   }
 }

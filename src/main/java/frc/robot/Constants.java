@@ -19,7 +19,7 @@ import swervelib.math.Matter;
 public final class Constants
 {
 
-  public static final double ROBOT_MASS = (45 + 15) * 0.453592; // weight in lb x kg per pound
+  public static final double ROBOT_MASS = (115 + 15) * 0.453592; // weight in lb x kg per pound
   public static final Matter CHASSIS    = new Matter(new Translation3d(0, 0, Units.inchesToMeters(8)), ROBOT_MASS); //robot Center of Mass
   public static final double LOOP_TIME  = 0.13; //s, 20ms + 110ms sprk max velocity lag
   public static final double MAX_SPEED  = Units.feetToMeters(17.5);
@@ -75,5 +75,36 @@ public final class Constants
     public static final int AlmostDownValue = 100; //slow down when close to bottom
     public static final int AlmostUpValue = 900; //slow down when close to top
     public static final double SlowDown = 0.3; //slow down by 30% if close to limit
+
+    public static final double deadband = 10;
+    public static final double TransferHeight = 50;
+    public static final double L1Height = 40;
+    public static final double L2Height = 90;
+    public static final double L3Height = 120;
+    public static final double L4Height = 200;
+    public static final double AutoUpSpeed = .4;
+    public static final double AutoDownSpeed = -.3;
+    public static final double HoldElevatorSpeed = 0.1;
+
+    public static final int TransferButton = 1;
+    public static final int L4JoystickButton = 3;
   }
+
+  public static class ArmConstants{
+    public static final int armMotorCANID = 12;
+    public static final int GripperCANID = 21;
+
+    public static final int armBottomLimitSwitchIO = 3;
+    public static final int armTopLimitSwitchIO = 4;
+
+    public static final int AlmostDownValue = 30; //slow down when close to bottom
+    public static final int AlmostUpValue = 90; //slow down when close to top
+    public static final double SlowDown = 0.2; //slow down by 20% if close to limit
+
+    public static final double ArmDownSpeed = -.3;
+
+    public static final double GripperInSpeed = .5;
+    public static final double GripperOutSpeed = -.3;
+  }
+
 }
