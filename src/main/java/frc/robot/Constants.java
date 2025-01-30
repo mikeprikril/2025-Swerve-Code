@@ -78,16 +78,21 @@ public final class Constants
 
     public static final double deadband = 10;
     public static final double TransferHeight = 50;
+    public static final double troughHeight = 40;
     public static final double L1Height = 40;
     public static final double L2Height = 90;
     public static final double L3Height = 120;
     public static final double L4Height = 200;
     public static final double AutoUpSpeed = .4;
     public static final double AutoDownSpeed = -.3;
+    public static final double TransferDownSpeed = -0.1;
     public static final double HoldElevatorSpeed = 0.1;
 
     public static final int TransferButton = 1;
     public static final int L4JoystickButton = 3;
+
+    public static final double JoystickDeadband = 0.05;
+    public static final double goSlow = .25; //slow down elevator joystick input
   }
 
   public static class ArmConstants{
@@ -105,6 +110,11 @@ public final class Constants
 
     public static final double GripperInSpeed = .5;
     public static final double GripperOutSpeed = -.3;
+
+    public static final int gripperInButton = 5;
+    public static final int gripperOutButton = 6;
+
+    public static final double goSlow = .25; //slow down arm joystick input
   }
 
 }

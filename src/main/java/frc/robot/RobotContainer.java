@@ -9,18 +9,20 @@ import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.ControllerConstants;
 import frc.robot.commands.AutoElevatorCommand;
+import frc.robot.commands.GetCoral;
+import frc.robot.commands.GripperInManual;
+import frc.robot.commands.GripperOutManual;
 import frc.robot.commands.ManualArmCommand;
 import frc.robot.commands.ManualElevatorCommand;
-import frc.robot.commands.RotateIntakeCommand;
 import frc.robot.commands.TransferPosition;
 import frc.robot.subsystems.ArmSubsytem;
 import frc.robot.subsystems.ElevatorSubsystem;
-import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
 import java.io.File;
 import swervelib.SwerveInputStream;
@@ -39,14 +41,17 @@ public class RobotContainer
   // Subsystems
   private final ElevatorSubsystem elevator = new ElevatorSubsystem();
   private final ArmSubsytem arm = new ArmSubsytem();
-  private final IntakeSubsystem intake = new IntakeSubsystem();
 
   // Commands
   private final ManualElevatorCommand manualElevator;
   private final ManualArmCommand manualArm;
-  private final AutoElevatorCommand autoElevator;
-  private final RotateIntakeCommand rotateIntake;
+  private final AutoElevatorCommand autoElevator;;
   private final TransferPosition transfer;
+  private final GetCoral getCoral;
+  private final GripperInManual gripperIn;
+  private final GripperOutManual gripperOut;
+
+  private final SequentialCommandGroup AutoTransfer;
 
 
   //All the YAGSL Swerve Stuff - 
@@ -94,10 +99,13 @@ public class RobotContainer
     //initialize all teleop and auto commands here
     manualElevator = new ManualElevatorCommand(elevator, operatorXbox);
     manualArm = new ManualArmCommand(arm, operatorXbox);
-    rotateIntake = new RotateIntakeCommand(intake, driverXbox);
     autoElevator = new AutoElevatorCommand(elevator, operatorXbox);
     transfer = new TransferPosition(elevator, arm, operatorXbox);
-    
+    getCoral = new GetCoral(elevator, arm, operatorXbox);
+    gripperIn = new GripperInManual(arm, operatorXbox);
+    gripperOut = new GripperOutManual(arm, operatorXbox);
+
+    AutoTransfer = new SequentialCommandGroup(transfer, getCoral); //sequential command group for auto transfer
 
     //Pathplanner named commands go here
     //NamedCommands.registerCommand("Fire From Subwoofer", new FireFromSubwoofer(m_arm, m_shooter));
@@ -121,14 +129,15 @@ public class RobotContainer
     drivebase.setDefaultCommand(driveFieldOrientedAnglularVelocity);
     elevator.setDefaultCommand(manualElevator);
     arm.setDefaultCommand(manualArm);
-    intake.setDefaultCommand(rotateIntake);
 
     //Joystick Button Actions
     new JoystickButton(driverXbox, 8).onTrue(new InstantCommand(drivebase::zeroGyro));
     new JoystickButton(driverXbox, 9).whileTrue(drivebase.centerModulesCommand());
 
     new JoystickButton(operatorXbox, Constants.ElevatorConstants.L4JoystickButton).onTrue(autoElevator); //when pressing button 3, go to elevator position
-    new JoystickButton(operatorXbox, Constants.ElevatorConstants.TransferButton).onTrue(transfer); //when pressing button 4, move to transfer position
+    new JoystickButton(operatorXbox, Constants.ElevatorConstants.TransferButton).onTrue(transfer); //when pressing button 4, move to transfer position (change to autotransfer)
+    new JoystickButton(operatorXbox, Constants.ArmConstants.gripperInButton).onTrue(gripperIn); //manual gripper in
+    new JoystickButton(operatorXbox, Constants.ArmConstants.gripperOutButton).onTrue(gripperOut); //manual gripper out
   }
 
   /**

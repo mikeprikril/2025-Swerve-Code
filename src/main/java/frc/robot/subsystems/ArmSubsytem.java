@@ -6,20 +6,25 @@ package frc.robot.subsystems;
 
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
+import com.revrobotics.spark.SparkAbsoluteEncoder;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+import com.revrobotics.spark.config.EncoderConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.wpilibj.DigitalInput;
+
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
 public class ArmSubsytem extends SubsystemBase {
   /** Creates a new ArmSubsystem. */
   SparkMax armMotor;
+  
   WPI_VictorSPX gripperWheel;
 
   SparkMaxConfig armMotorConfig = new SparkMaxConfig();
@@ -37,11 +42,15 @@ public class ArmSubsytem extends SubsystemBase {
     .pid(.0001, 0, 0) //PID constants
     .outputRange(-.3, 1); //arm PID range
 
+
     armMotor = new SparkMax(Constants.ArmConstants.armMotorCANID, MotorType.kBrushless);
     armMotor.configure(armMotorConfig, null, null);
     shoulderEncoder = armMotor.getAbsoluteEncoder().getPosition();
 
     gripperWheel = new WPI_VictorSPX(Constants.ArmConstants.GripperCANID);
+
+    armBottomLimitSwitch = new DigitalInput(Constants.ArmConstants.armBottomLimitSwitchIO);
+    armTopLimitSwitch = new DigitalInput(Constants.ArmConstants.armTopLimitSwitchIO);
   }
 
     public void ArmJoystickControl(double armCommandSpeed){
@@ -57,8 +66,11 @@ public class ArmSubsytem extends SubsystemBase {
     else if(armCommandSpeed < 0 && shoulderEncoder > Constants.ArmConstants.AlmostUpValue){//go up slow if close to high limit
       armMotor.set(Constants.ArmConstants.SlowDown*armCommandSpeed);
     }
+    else if (armCommandSpeed > -Constants.ElevatorConstants.JoystickDeadband && armCommandSpeed < Constants.ElevatorConstants.JoystickDeadband){
+      armMotor.stopMotor();
+    }
     else{
-      armMotor.set(armCommandSpeed);
+      armMotor.set(armCommandSpeed*Constants.ArmConstants.goSlow);
     }
   }
 
@@ -106,5 +118,8 @@ public class ArmSubsytem extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
+    SmartDashboard.putNumber("Arm Encoder Value", shoulderEncoder); //show elevator encoder on dashboard
+    SmartDashboard.putBoolean("Arm Bottom Limit", armBottomLimitSwitch.get());
+    SmartDashboard.putBoolean("Arm Top Limit", armTopLimitSwitch.get());
   }
 }

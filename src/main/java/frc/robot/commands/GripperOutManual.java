@@ -7,19 +7,20 @@ package frc.robot.commands;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
-import frc.robot.subsystems.IntakeSubsystem;
+import frc.robot.subsystems.ArmSubsytem;
 
 /* You should consider using the more terse Command factories API instead https://docs.wpilib.org/en/stable/docs/software/commandbased/organizing-command-based.html#defining-commands */
-public class RotateIntakeCommand extends Command {
-  /** Creates a new RotateIntakeCommand. */
-  public final IntakeSubsystem intake;
-  public final XboxController intakeJoystick;
+public class GripperOutManual extends Command {
+  /** Creates a new GripperInManual. */
+  public final ArmSubsytem arm;
+  public final XboxController operatorJoystick;
 
-  public RotateIntakeCommand(IntakeSubsystem m_intake, XboxController m_joystick) {
+  public GripperOutManual(ArmSubsytem m_arm, XboxController m_operatorJoystick) {
     // Use addRequirements() here to declare subsystem dependencies.
-    intake = m_intake;
-    intakeJoystick = m_joystick;
-    addRequirements(intake);
+    arm = m_arm;
+    operatorJoystick = m_operatorJoystick;
+
+    addRequirements(arm);
   }
 
   // Called when the command is initially scheduled.
@@ -29,25 +30,18 @@ public class RotateIntakeCommand extends Command {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    if (intakeJoystick.getLeftBumperButton() == true){
-      intake.ManualIntakeRotate(Constants.IntakeConstants.DownSpeed);
-    }
-    else if (intakeJoystick.getRightBumperButton() == true){
-      intake.ManualIntakeRotate(Constants.IntakeConstants.UpSpeed);
-    }
-    else{
-      intake.ManualIntakeRotate(0);// stop motor
-    }
-    
+    arm.GripperSpitOut();
   }
 
   // Called once the command ends or is interrupted.
   @Override
-  public void end(boolean interrupted) {}
+  public void end(boolean interrupted) {
+    arm.StopGripper();
+  }
 
   // Returns true when the command should end.
   @Override
   public boolean isFinished() {
-    return false;
+    return !operatorJoystick.getRawButton(Constants.ArmConstants.gripperOutButton);
   }
 }

@@ -4,17 +4,11 @@
 
 package frc.robot.subsystems;
 
-import com.revrobotics.AbsoluteEncoder;
-import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkBase.ControlType;
-import com.revrobotics.spark.SparkBase.PersistMode;
-import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.spark.config.SparkMaxConfig;
-import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
-import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+
 
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -59,6 +53,8 @@ public class ElevatorSubsystem extends SubsystemBase {
 
     pidController = leftElevatorMotor.getClosedLoopController();
 
+    elevatorBottomLimitSwitch = new DigitalInput(Constants.ElevatorConstants.elevatorBottomLimitSwitchIO);
+    elevatorTopLimitSwitch = new DigitalInput(Constants.ElevatorConstants.elevatorTopLimitSwitchIO);
   }
 
   public void ElevatorJoystickControl(double elevatorCommandSpeed){
@@ -78,9 +74,13 @@ public class ElevatorSubsystem extends SubsystemBase {
       leftElevatorMotor.set(Constants.ElevatorConstants.SlowDown*elevatorCommandSpeed);
       rightElevatorMotor.set(Constants.ElevatorConstants.SlowDown*-elevatorCommandSpeed);
     }
+    else if (elevatorCommandSpeed > -Constants.ElevatorConstants.JoystickDeadband && elevatorCommandSpeed < Constants.ElevatorConstants.JoystickDeadband){
+      leftElevatorMotor.stopMotor();
+      rightElevatorMotor.stopMotor();
+    }
     else{
-      leftElevatorMotor.set(elevatorCommandSpeed);
-      rightElevatorMotor.set(-elevatorCommandSpeed);
+      leftElevatorMotor.set(elevatorCommandSpeed*Constants.ElevatorConstants.goSlow);
+      rightElevatorMotor.set(-elevatorCommandSpeed*Constants.ElevatorConstants.goSlow);
     }
   }
 
